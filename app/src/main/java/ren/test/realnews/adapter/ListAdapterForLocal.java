@@ -59,7 +59,9 @@ public class ListAdapterForLocal extends BaseAdapter {
         } else
             viewHolder = (ViewHolder) convertView.getTag();
         if (getItem(position).getImageurls() != null && !getItem(position).getImageurls().isEmpty())
-            Glide.with(mContext).load(getItem(position).getImageurls().get(0)).error(R.mipmap.ic_launcher).into(viewHolder.thumImage);
+            Glide.with(mContext).load(getItem(position).getImageurls().get(0).getUrl()).error(R.mipmap.falid).into(viewHolder.thumImage);
+        else
+            Glide.with(mContext).load(R.mipmap.falid).into(viewHolder.thumImage);
         viewHolder.tittle.setText(getItem(position).getTitle());
         viewHolder.date.setText(getItem(position).getPubDate());
         return convertView;

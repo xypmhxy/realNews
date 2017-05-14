@@ -1,5 +1,6 @@
 package ren.test.realnews.fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -7,11 +8,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
 import java.util.Map;
 
+import ren.test.realnews.DetailActivity;
 import ren.test.realnews.R;
 import ren.test.realnews.RxJavaAdapter.RxJavaCallAdapterFactory;
 import ren.test.realnews.adapter.ListAdapter;
@@ -31,7 +34,7 @@ import rx.schedulers.Schedulers;
  * Created by Administrator on 2017/5/12
  */
 
-public class FragmentLocalNews extends Fragment {
+public class FragmentLocalNews extends Fragment implements AdapterView.OnItemClickListener{
     public static final String KEY_TITTLE = "type";
     private ListView listView;
     private String type;
@@ -46,6 +49,7 @@ public class FragmentLocalNews extends Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         listView = (ListView) view.findViewById(R.id.listview_fragment_news);
+        listView.setOnItemClickListener(this);
         progressBar = (ProgressBar) view.findViewById(R.id.progress_fragment_news);
         super.onViewCreated(view, savedInstanceState);
     }
@@ -54,7 +58,7 @@ public class FragmentLocalNews extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         if (getArguments() != null && getArguments().getString(KEY_TITTLE) != null)
             type = getArguments().getString(KEY_TITTLE);
-        Retrofit retrofit = new Retrofit.Builder().baseUrl(HttpConfig.BASE_URL)
+        Retrofit retrofit = new Retrofit.Builder().baseUrl(HttpConfig.LOCAL_NEWS_BASE_URL)
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create()).build();
         Map<String, String> map = HttpConfig.getBaseMap();
@@ -82,5 +86,13 @@ public class FragmentLocalNews extends Fragment {
             }
         });
         super.onActivityCreated(savedInstanceState);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        ListAdapterForLocal adapter= (ListAdapterForLocal) listView.getAdapter();
+        Intent intent=new Intent(getActivity(), DetailActivity.class);
+        intent.putExtra("url",adapter.getItem(position).getLink());
+        getActivity().startActivity(intent);
     }
 }

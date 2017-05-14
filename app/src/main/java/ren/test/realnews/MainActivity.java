@@ -7,13 +7,17 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationListener;
 import com.astuetz.PagerSlidingTabStrip;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import ren.test.realnews.Application.NewsApplication;
 import ren.test.realnews.RxJavaAdapter.RxJavaCallAdapterFactory;
 import ren.test.realnews.adapter.PagerAdapter;
 import ren.test.realnews.beans.NewsType;
@@ -29,17 +33,15 @@ import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AMapLocationListener{
 
     private ViewPager viewPager;
     private PagerSlidingTabStrip tabStrip;
     private String type[] =
-
             {
                     "top", "shehui", "guonei", "guoji", "yule", "tiyu", "junshi", "keji", "caijing", "shishang"
             };
     private String typeCN[] =
-
             {
                     "头条", "社会", "国内", "国际", "娱乐", "体育", "军事", "科技", "财经", "时尚"
             };
@@ -49,8 +51,30 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        NewsApplication application= (NewsApplication) getApplication();
+        application.mLocationClient.setLocationListener(this);
+        application.mLocationClient.startLocation();
+        viewPager = (ViewPager) findViewById(R.id.viewpager);
+        tabStrip = (PagerSlidingTabStrip) findViewById(R.id.pagerStrip);
+        tabStrip.setIndicatorColor(Color.parseColor("#000000"));
+        tabStrip.setDividerColor(Color.TRANSPARENT);
+        tabStrip.setUnderlineColor(Color.TRANSPARENT);
+        tabStrip.setIndicatorHeight(5);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode==KeyEvent.KEYCODE_BACK){
+            moveTaskToBack(true);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public void onLocationChanged(AMapLocation aMapLocation) {
         for (int i = 0; i < 11; i++) {
-            NewsType newsType = null;
+            NewsType newsType ;
             if (i == 0) {
                 newsType = new NewsType("四川", "四川");
             } else {
@@ -58,37 +82,16 @@ public class MainActivity extends AppCompatActivity {
             }
             types.add(newsType);
         }
-        viewPager = (ViewPager) findViewById(R.id.viewpager);
-        tabStrip = (PagerSlidingTabStrip) findViewById(R.id.pagerStrip);
-        tabStrip.setIndicatorColor(Color.parseColor("#000000"));
-        tabStrip.setDividerColor(Color.TRANSPARENT);
-        tabStrip.setUnderlineColor(Color.TRANSPARENT);
-        tabStrip.setIndicatorHeight(5);
-        Retrofit retrofit = new Retrofit.Builder().baseUrl(HttpConfig.LOCAL_NEWS_BASE_URL)
-                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create()).build();
-        HttpApi httpApi = retrofit.create(HttpApi.class);
-        Map<String, String> map = HttpConfig.getBaseMap();
-//        Observable<YiYuanResultBean> observable = httpApi.getLocalNews(map);
-//        observable.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Subscriber<YiYuanResultBean>() {
-//            @Override
-//            public void onCompleted() {
-//                Log.d("rq", "");
-//            }
-//
-//            @Override
-//            public void onError(Throwable throwable) {
-//                Log.d("rq", "");
-//            }
-//
-//            @Override
-//            public void onNext(YiYuanResultBean yiYuanResultBean) {
-//                Log.d("rq", "");
-//            }
-//        });
+        if (aMapLocation!=null&&aMapLocation.getErrorCode()==0){
+            String province=aMapLocation.getProvince();
+            if (province.length()>=3)
+                province= province.substring(0,2);
+            types.get(0).setTittle(province);
+            types.get(0).setType(province);
+        }
         List<Fragment> list = new ArrayList<>();
         for (int i = 0; i < type.length; i++) {
-            Fragment fragment = null;
+            Fragment fragment;
             if (i == 0)
                 fragment = new FragmentLocalNews();
             else
